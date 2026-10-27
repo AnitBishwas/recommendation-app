@@ -614,4 +614,3 @@ https://swiss-local-dev.myshopify.com/?preview_theme_id=174262944113&utm_source=
 ```
 
 Replace UTM values with the ones set on your active campaign.
-u

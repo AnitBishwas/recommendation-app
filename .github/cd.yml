@@ -1,0 +1,40 @@
+name: CD Pipeline
+
+on:
+  workflow_run:
+    workflows: ["CI Pipeline"]
+    types:
+        - completed
+
+jobs:
+
+  build:
+
+    runs-on: self-hosted
+
+    steps:
+    - name: Free Disk Space Before Build
+      run: |
+        echo "Disk space before cleanup:"
+        df -h
+        sudo rm -rf /usr/local/.ghcup
+        sudo rm -rf /opt/hostedtoolcache/CodeQL
+        sudo rm -rf /usr/local/lib/android/sdk/ndk
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/local/share/boost
+        sudo apt-get clean
+        echo "Disk space after cleanup:"
+        df -h
+    - name: Login Dockerhub
+      env:
+        DOCKERHUB_USERNAME: ${{secrets.DOCKER_USERNAME}}
+        DOCKER_PASS: ${{secrets.DOCKER_PASS}}
+      run: docker login -u $DOCKERHUB_USERNAME -p $DOCKER_PASS
+    - name: Pull Docker Image
+      run: sudo docker pull anitbishwas/recommendation-app:latest
+    - name: Delete Old Docker Container
+      run: sudo docker rm -f recommendation-app || true
+    - name: Run Docker Container
+      run: |
+         sudo docker run --env-file ~/secrets/.env -d -p 8082:8082 --restart=always --name recommendation-app anitbishwas/recommendation-app
